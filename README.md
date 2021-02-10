@@ -1,5 +1,5 @@
 **AXI Specification**
--
+- 
 
 - [1. Introduction](#1-introduction)
   - [1.1. About the AXI Protocol](#11-about-the-axi-protocol)
@@ -99,8 +99,37 @@
     - [7.1.1. Single-copy atomicity size](#711-single-copy-atomicity-size)
     - [7.1.2. Multi-copy write atomicity](#712-multi-copy-write-atomicity)
   - [7.2. Exclusive accesses](#72-exclusive-accesses)
+    - [7.2.1. Exclusive access process](#721-exclusive-access-process)
+    - [7.2.2. Exclusive access from the perspective of the master](#722-exclusive-access-from-the-perspective-of-the-master)
+    - [7.2.3. Exclusive access from the perspective of the slave](#723-exclusive-access-from-the-perspective-of-the-slave)
+    - [7.2.4. Exclusive access restrictions](#724-exclusive-access-restrictions)
+    - [7.2.5. Responses to exclusive access](#725-responses-to-exclusive-access)
   - [7.3. Locked accesses](#73-locked-accesses)
   - [7.4. Atomic access signaling](#74-atomic-access-signaling)
+    - [7.4.1. AXI3 Atomic access encoding](#741-axi3-atomic-access-encoding)
+    - [7.4.2. AXI4 Atomic access encoding](#742-axi4-atomic-access-encoding)
+    - [7.4.3. Legacy considerations](#743-legacy-considerations)
+- [8. AMBA 4 Additional Signaling](#8-amba-4-additional-signaling)
+  - [8.1. QoS signaling](#81-qos-signaling)
+    - [8.1.1. QoS interface signals](#811-qos-interface-signals)
+    - [8.1.2. Master considerations](#812-master-considerations)
+    - [8.1.3. System considerations](#813-system-considerations)
+  - [8.2. Multiple region signaling](#82-multiple-region-signaling)
+    - [8.2.1. Additional interface signals](#821-additional-interface-signals)
+  - [8.3. User-defined signaling](#83-user-defined-signaling)
+    - [8.3.1. User-defined signaling configuration](#831-user-defined-signaling-configuration)
+    - [8.3.2. Signaling](#832-signaling)
+    - [8.3.3. Usage considerations](#833-usage-considerations)
+- [9. Default Signaling and Interoperability](#9-default-signaling-and-interoperability)
+  - [9.1. Interoperability principles](#91-interoperability-principles)
+  - [9.2. Major interface categories](#92-major-interface-categories)
+    - [9.2.1. Read/Write interface](#921-readwrite-interface)
+    - [9.2.2. Read-only interface](#922-read-only-interface)
+    - [9.2.3. Write-only interface](#923-write-only-interface)
+    - [9.2.4. Memory slaves and Peripheral slaves](#924-memory-slaves-and-peripheral-slaves)
+  - [9.3. Default signal values](#93-default-signal-values)
+    - [9.3.1. Default signal values](#931-default-signal-values)
+    - [9.3.2. Default signal requirements](#932-default-signal-requirements)
 
 # 1. Introduction
 
@@ -142,8 +171,10 @@
   - Read data，读数据通道，信号以R开头
 
 - **Channel architecture of transaction**
-  - Channel architecture of writes ![写事务的通道架构](README.assets/1.jpg)
-  - Channel architecture of reads ![读事务的通道架构](README.assets/2.jpg)
+  - Channel architecture of writes 
+    ![写事务的通道架构](README.assets/1.jpg)
+  - Channel architecture of reads 
+    ![读事务的通道架构](README.assets/2.jpg)
 
 
 ### 1.2.2. Channel Definition
@@ -237,7 +268,7 @@
 - **AWQOS**   
     写事务服务质量
 - **AWREDION**   
-    区域标志，能实现单一物理接口对应的多个逻辑接口
+    区域标志，能实现单一物理接口提供多个逻辑接口
 - **AWUSER**   
     用户自定义信号
 - **AWVALID**   
@@ -255,6 +286,7 @@
 
 - **WID**  
     Write ID tag，写过程ID，一次写传输的ID，必须和AWID相匹配
+    *AXI4中已取消*
 - **WDATA**  
     Write data，可支持8-1024位数据传输
 - **WSTRB**  
@@ -383,9 +415,12 @@
     - 当VALID和READY均为高时数据才可传输
 
 - **示例**    
-    - VALID before READY handshake ![VbR](README.assets/3.jpg)
-    - READY before VALID handshake ![RbV](README.assets/4.jpg)
-    - VALID with READY handshake   ![VwR](README.assets/5.jpg)   
+    - VALID before READY handshake 
+        ![VbR](README.assets/3.jpg)
+    - READY before VALID handshake 
+        ![RbV](README.assets/4.jpg)
+    - VALID with READY handshake   
+        ![VwR](README.assets/5.jpg)   
 
 ### 3.2.2. Channel signaling requirements
 
@@ -650,8 +685,10 @@ return;
     - 对于增量和回环突发传输，每一次传输所用到的字节通道不尽相同
     - 对于固定突发传输，每一次传输用到的字节通道是一样的
   - 示例
-    - 8-bit transfers on 32-bit bus  ![8-bit](README.assets/9.jpg)
-    - 32-bit transfers on 64-bit bus ![32-bit](README.assets/10.jpg)
+    - 8-bit transfers on 32-bit bus  
+        ![8-bit](README.assets/9.jpg)
+    - 32-bit transfers on 64-bit bus 
+        ![32-bit](README.assets/10.jpg)
 
 - **Byte invariance**
   - 即字节所在的位置与大小端定义无关。完全按照其地址所对应的偏移来决定其采用哪一个字节通道(byte lane)来传输，换句话说，在AXI中，认为所有的传输都是以byte为单位的，每次传输都是传了多少个byte
@@ -717,49 +754,49 @@ return;
 ### 4.2.1. Transaction attribute encodeing
 
 - **Encoding** 
-    <table>
-        <tr>
-            <th>AxCACHE[n]</th>
-            <th>Value</th>
-            <th>Transaction Attribute</th>
-        </tr>
-        <tr>
-            <td rowspan="2">0</td>
-            <td>0</td>
-            <td><em>Non-bufferable</em></td>
-        </tr>
-        <tr>
-            <td>1</td>
-            <td><em>Bufferable</em></td>
-        </tr>
-        <tr>
-            <td rowspan="2">1</td>
-            <td>0</td>
-            <td><em>Non-cacheable</em></td>
-        </tr>
-        <tr>
-            <td>1</td>
-            <td><em>Cacheable</em></td>
-        </tr>
-        <tr>
-            <td rowspan="2">2</td>
-            <td>0</td>
-            <td><em>No Read-Allocate</em></td>
-        </tr>
-        <tr>
-            <td>1</td>
-            <td><em>Read-Allocate</em></td>
-        </tr>
-        <tr>
-            <td rowspan="2">3</td>
-            <td>0</td>
-            <td><em>No Write-Allocate</em></td>
-        </tr>
-        <tr>
-            <td>1</td>
-            <td><em>Write-Allocate</em></td>
-        </tr>
-    </table>
+<table>
+    <tr>
+        <th>AxCACHE[n]</th>
+        <th>Value</th>
+        <th>Transaction Attribute</th>
+    </tr>
+    <tr>
+        <td rowspan="2">0</td>
+        <td>0</td>
+        <td><em>Non-bufferable</em></td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td><em>Bufferable</em></td>
+    </tr>
+    <tr>
+        <td rowspan="2">1</td>
+        <td>0</td>
+        <td><em>Non-cacheable</em></td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td><em>Cacheable</em></td>
+    </tr>
+    <tr>
+        <td rowspan="2">2</td>
+        <td>0</td>
+        <td><em>No Read-Allocate</em></td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td><em>Read-Allocate</em></td>
+    </tr>
+    <tr>
+        <td rowspan="2">3</td>
+        <td>0</td>
+        <td><em>No Write-Allocate</em></td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td><em>Write-Allocate</em></td>
+    </tr>
+</table>
 
 - ***AxCACHE***
   - *AxCACHE[0], Bufferable(B)bit*
@@ -825,8 +862,10 @@ return;
     - *RA*位拉高表示当前地址的数据因为读传输事务或者其他主机的传输已经缓存在Cache中
 
 - **Cache Allocate**
-  - *AWCACHE bit allocations* ![Write-Allocate](README.assets/11.jpg)
-  - *ARCACHE bit allocations* ![Read-Allocate](README.assets/12.jpg)
+  - *AWCACHE bit allocations* 
+    ![Write-Allocate](README.assets/11.jpg)
+  - *ARCACHE bit allocations* 
+    ![Read-Allocate](README.assets/12.jpg)
 
 ## 4.4. Memory types
 
@@ -985,49 +1024,49 @@ return;
   - AWPORT[2:0]，定义了写事务的访问权限
 
 - **Protection encoding**
-    <table>
-        <tr>
-            <th>AxPORT[n]</th>
-            <th>Value</th>
-            <th>Function</th>
-        </tr>
-        <tr>
-            <td rowspan = '2'>0</td>
-            <td>0</td>
-            <td><em>Unprivileged access</em></td>
-        </tr>
-        <tr>
-            <td>1</td>
-            <td><em>Privileged access</em></td>
-        </tr>
-        <tr>
-            <td rowspan = "2">1</td>
-            <td>0</td>
-            <td><em>Secure access</em></td>
-        </tr>
-        <tr>
-            <td>1</td>
-            <td><em>Non-secure access</em></td>
-        </tr>
-        <tr>
-            <td rowspan = "2">2</td>
-            <td>0</td>
-            <td><em>Data access</em></td>
-        </tr>
-        <tr>
-            <td>1</td>
-            <td><em>Instruction access</em></td>
-        </tr>
-    </table> 
+<table>
+    <tr>
+        <th>AxPORT[n]</th>
+        <th>Value</th>
+        <th>Function</th>
+    </tr>
+    <tr>
+        <td rowspan = '2'>0</td>
+        <td>0</td>
+        <td><em>Unprivileged access</em></td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td><em>Privileged access</em></td>
+    </tr>
+    <tr>
+        <td rowspan = "2">1</td>
+        <td>0</td>
+        <td><em>Secure access</em></td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td><em>Non-secure access</em></td>
+    </tr>
+    <tr>
+        <td rowspan = "2">2</td>
+        <td>0</td>
+        <td><em>Data access</em></td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td><em>Instruction access</em></td>
+    </tr>
+</table> 
 
 ### 4.7.2. Protection attributes
 
-- **Unprivileged acces**
-- **Privileged acces**
-- **Secure acces**
-- **Non-secure acces**
-- **Data acces**
-- **Instruction acces**
+- **Unprivileged access**
+- **Privileged access**
+- **Secure access**
+- **Non-secure access**
+- **Data access**
+- **Instruction access**
 
 # 5. Transaction Identifiers
 
@@ -1288,6 +1327,962 @@ return;
   - **False**：不支持多拷贝原子性
   - 默认不支持
 
+- 以下情况系统具有多拷贝原子性：
+  - 所有Agents都已相同的顺序对访问相同位置的写事务。
+  - 一个写事务对一个Agent可见，则对所有的Agents可见。
+
+- 可以通过以下方式确保多拷贝原子性：
+  - 对给定地址使用单个序列化点，以便对同一位置的所有访问进行排序。这必须确保该位置的所有一致性缓存副本在使该位置的新值对任何Agent可见之前都无效。
+  - 避免使用任何Agent上游的转发缓冲区。这可以防止某个位置的缓冲写事务在对所有Agent可见之前对某些Agent可见。
+  - 对于本发行版G和更高版本，要求Multi_Copy_Atomicity属性为True。
+
 ## 7.2. Exclusive accesses
+
+- 独占访问机制使得信号量类型操作（semaphore type operations）的开发不需要总线在操作期间保持对某一个特定主机的锁定。
+- 这意味着信号量类型的操作不会影响总线访问延迟或最大可达到的带宽。
+- AxLOCK信号选择独占访问，RRESP和BRESP信号表示独占访问的成功或失败。
+- Slave需要额外的逻辑来支持独占访问。AXI协议提供了一种用于指示Master何时尝试对不支持它的Slave进行独占访问的机制。本节的其余部分描述了AXI Exclusive访问机制。
+
+### 7.2.1. Exclusive access process
+
+- **独占访问的基本过程**
+1. Master对一个地址执行独占读取。
+2. 之后，Master尝试通过对同一地址执行独占写入，并使用与用于独占读取的ARID匹配的AWID来结束独占操作。
+3. 此独占写入访问结果可以表示为：
+   - 在读和写访问之间，如果没有其他Master对该位置进行写访问，则独占访问成功,这种情况下，地址位置被该独占写访问更新。
+   - 在读和写访问之间，如果任何Master对该位置进行写访问，则独占访问失败，在这种情况下，地址位置不会被更新。
+
+- **注意**
+  - 一个主机可能还没有完成一个独占操作的写操作部分。独占访问的监视硬件，只能监视每个事务ID的一个地址。
+  - 如果一个Master没有完成独占操作的写操作部分，则接下来的一个独占读访问会改变正在被独占地监视的地址。
+
+### 7.2.2. Exclusive access from the perspective of the master
+
+- 主机通过执行一个独占读操作来开始一个独占操作，独占操作通常从从机返回一个EXOKAY响应，表示从机记录了要被监视的地址。
+- 注意
+  - 如果主机尝试从一个不支持独占访问的从机执行一个独占读操作，则从机返回OKAY响应，而不是EXOKAY响应，表示独占访问失败。
+  - 主机可将这种情况当做错误条件，表示不支持独占访问，推荐主机在这种情况下，不执行该独占操作的写操作部分。
+- 独占读操作之后通常会对同一地址进行独占写操作：
+  - 如果地址位置没有发生改变，则独占写成功，从机返回EXOKAY响应，并且更新内存位置。
+  - 如果地址位置发生了改变，则独占写失败，从机返回OKAY响应，且不会更新内存位置。
+- 一个主机可能无法完成独占访问的写操作部分。如果发生这种情况，则从机继续监视独占的地址，直到另一个独占读操作开始一个新的独占访问。
+- 在独占访问的读操作完成之前，主机不能开始独占访问的写操作部分。
+
+### 7.2.3. Exclusive access from the perspective of the slave
+
+-  一个不支持独占访问的从机可以忽视 *ARLOCK[1:0]/AWLOCK[1:0]* 信号，从机必须为正常访问和独占访问提供一个OKAY响应。
+
+- 一个支持独占访问的从机必须具有监控硬件，一般具有一个监控单元，用来监控可访问该从机的每个可独占访问的主机ID。一个单端口从机可以具有一个从机外部的标准独占访问监控器，但是多端口的从机可能需要内部监控器。
+
+- 独占访问监控器记录任何独占读操作的地址和ARID值，之后监控器一直监控该位置，直到一个到该位置的写操作发生，或者直到相同的ARID值的另一个独占读操作将监控器复位到一个不同的地址；
+
+- 当一个具有给定的AWID值的独占写操作发生，则监控器会检查该地址是否正在被独占监控;
+  - 如果是，则表示独占写操作之前，该位置没有发生写操作，独占写操作会继续执行，来完成独占访问。从机返回EXOKAY响应到主机。
+  - 如果独占写发生时，地址不再被监控，则表示以下情况：
+    - 从机独占读之后，位置被更新
+    - 监控器已经被复位到另一个位置
+    - 主机未发出具有与独占写操作相同属性的独占读操作
+    - 以上情况下，独占写操作都不能更新地址位置，并且从机必须返回OKAY响应，代替EXOKAY响应
+
+### 7.2.4. Exclusive access restrictions
+
+- **独占访问约束**
+  - 独占访问的地址必须与事务中的字节总数对齐，即突发大小和突发长度的乘积。
+  - 独占访问突发中要传输的字节数必须是2的指数次方，即1、2、4、8、16、32、64或128个字节。
+  - 独占突发中可以传输的最大字节数为128。
+  - 独占访问的突发长度不能超过16。
+  - *AxCACHE*信号的值必须确保事务到达正在监视独占访问的从设备。如果有缓冲区或缓存区可能会在到达监视器之前响应独占访问，因此独占访问必须是不可缓冲的和不可缓存的。
+  - 地址域要么是不可共享的要么是系统可共享的。
+  - 事务类型必须为 *ReadNoSnoop* 或 *WriteNoSnoop*。
+  - **不遵循上述约束会产生无法预料的行为。**
+
+- 独占访问可以分为独占读操作和独占写操作，对于两次传输，下列信号必须保持一致：
+  - *AxID*
+  - *AxADDR*
+  - *AxREGION*
+  - *AxLEN*
+  - *AxSIZE*
+  - *AxBURST*
+  - *AxLOCK*
+  - *AxCACHE*
+  - *AxPORT*
+  - *AxDOMAIN*
+  - *AxSNOOP*
+  - *AxMMUSECSID*
+  - *AxMMUSID*
+  - *AxMMUSSIDV*
+  - *AxMMUSSID*
+  - *AxMMUATST*
+
+- 独占操作期间要监视的最小字节数由事务的突发长度和突发大小定义。但从机可以监视更多的字节，最大为128，这是独占访问的最大大小。但是，这可能导致成功的独占访问被指示为失败，因为相邻字节被更新。
+
+### 7.2.5. Responses to exclusive access
+
+- 响应信号 *BRESP* 和 *RRESP*中包含一个用于指示正常访问成功的*OKAY* 信号，以及一个用于指示独占访问成功的 *EXOKAY* 信号。同时，*OKAY* 信号还可以指示独占访问失败。
+- 注意
+  - 对不支持独占访问的从属设备的独占写操作始终会更新内存位置。
+  - 仅当独占写入操作成功时，对支持独占访问的从属设备进行独占写入才更新内存位置。
+- 独占写入使用BRESP进行单个响应，可以是OKAY，EXOKAY，SLVERR或DECERR。
+- 独占读取具有一个或多个响应节拍。这些可以是EXOKAY，SLVERR和DECERR的混合，也可以是OKAY，SLVERR和DECERR的混合。但是不允许在同一事务中混合使用EXOKAY和OKAY响应。
+ 
 ## 7.3. Locked accesses
+
+- AXI4不支持锁定访问，但AXI3中必须支持锁定访问。
+- AXI4取消锁定访问的原因：
+  - 大多数组件不需要锁定的事务传输
+  - 锁定的事务传输的实现会有重大影响：
+    - 互连的复杂性
+    - 做出QoS保证的能力
+
 ## 7.4. Atomic access signaling
+
+### 7.4.1. AXI3 Atomic access encoding
+<table>
+    <tr>
+        <th>AxLOCK[1:0]</th>
+        <th>Access type</th>
+    </tr>
+    <tr>
+        <td>00</td>
+        <td><em>Normal access</em></td>
+    </tr>
+    <tr>
+        <td>01</td>
+        <td><em>Exclusive access</em></td>
+    </tr>
+    <tr>
+        <td>10</td>
+        <td><em>Locked access</em></td>
+    </tr>
+    <tr>
+        <td>11</td>
+        <td><em>Reserved</em></td>
+    </tr>
+</table>
+
+### 7.4.2. AXI4 Atomic access encoding
+<table>
+    <tr>
+        <th>AxLOCK</th>
+        <th>Access type</th>
+    </tr>
+    <tr>
+        <td>0</td>
+        <td><em>Normal access</em></td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td><em>Exclusive access</em></td>
+    </tr>
+</table>
+
+### 7.4.3. Legacy considerations
+<table>
+    <tr>
+        <th>AXI3</th>
+        <th>AXI4</th>
+    </tr>
+    <tr>
+        <td><em>AWLOCK[1:0] = 2'b10</em></td>
+        <td><em>AWLOCK = 0</em></td>
+    </tr>
+    <tr>
+        <td><em>ARLOCK[1:0] = 2'b10</em></td>
+        <td><em>ARLOCK = 0</em></td>
+    </tr>
+</table>
+
+# 8. AMBA 4 Additional Signaling
+
+## 8.1. QoS signaling
+
+### 8.1.1. QoS interface signals
+
+- *AxQoS*
+  - *ARQoS*：4位QoS信号，每个读事务均通过读地址通道发送。
+  - *AWQoS*：4位QoS信号，每个写事务均通过写地址通道发送。
+- 作用
+  - 该协议未指定QoS标识符的确切用法。但一般会将 *AxQOS* 用作读写事务的优先级指示符，较高的值表示事务优先级较高。缺省值 *0b0000* 表示接口未参与任何QoS方案。
+- 注意
+  - 也可以使用QoS的其他解释。
+
+### 8.1.2. Master considerations
+
+- 主机可以产生自己 *AxQOS* 值，如果主机可以发出多个事务流，则它可以给不同的事物流以不同的QoS值。
+- 支持QoS代表着要对所使用的QoS方案有着系统的了解，并且所有参与的组件要相互配合协作。因此，主机一般要具有可编程性，以控制在不同场景下QoS的确切值。
+- 如果主组件不支持可编程的QoS方案，则它可以使用QoS值来表示其生成的事务的相对优先级。并且在适当的情况下可以将这些值映射到替代的系统级QoS值。
+- 无法产生自己的*AxQOS*值的主机必须使用默认值。
+- 注意
+  - 该协议书期望多数互连组件将支持可编程寄存器，用于将QoS值分配给连接的主机。这些值取代了主机提供的QoS值（已编程或默认）。
+
+### 8.1.3. System considerations
+
+- 如AXI4中定义的QoS信令可与任何兼容的系统级QoS方法一起使用。
+- QoS的默认系统级实现是：仅当没有其他AXI约束要求以特定顺序处理事务时，首先处理QoS值高的事务。即AXI的排序规则的优先级要高于QoS。
+- 可以实现与此默认方案兼容的更复杂的QoS方案。
+
+## 8.2. Multiple region signaling
+
+### 8.2.1. Additional interface signals
+
+- **AxREGION信号**
+  - *AWREGION*：4-bits地址区域标识符，每个写事务通过写地址通道发送。
+  - *ARREGION*：4-bits地址区域标识符，每个读事务通过读地址通道发送。
+
+- 4-bits的区域标识符最多可唯一标识16个不同的区域。区域标识符可以提供地址的高位解码。在某4KB地址空间中保持不变。
+- 区域标识符的使用使得从机上的单个物理接口可以提供多个逻辑接口，每个逻辑接口在系统地址映射中具有不同的地址位置，而从机就不必支持不同逻辑接口之间的地址解码。
+- 当对具有多个逻辑接口的单个从设备执行地址解码时，此协议期望互连使用*AxREGION*信号。如果从站在系统地址映射中只有一个物理接口，则互连必须使用默认的*AxREGION*值。
+
+- **区域标识符使用模式**（不限于以下两种）
+  - 外设可以将其主数据路径和控制寄存器放置在地址映射中的不同位置，并且可以通过单个接口进行访问，而无需从机执行地址解码。
+  - 从机可以在不同的存储区域中表现出不同的行为。例如，从设备可能在一个区域中提供读写访问，而在另一区域中提供只读访问。
+
+- **注意**
+  - 从机必须确保正确的协议信号传递以及维持正确的事务顺序。
+  - 从机必须确保以正确的顺序为ID相同但访问区域不同的两个事务提供响应。
+  - 从机必须确保任何*AxREGION*值具有正确的协议信号传递。
+  - 如果从机内部的地址划分区域少于16个，则在访问不受支持的区域时，从机必须确保正确的信号传递。具体如何实现由设计从机时决定，例如：
+    - 为访问不受支持的区域的任何访问都提供错误响应
+    - :grey_question: 在所有不受支持的区域中对受支持的区域进行别名处理，以确保对所有访问均给出符合协议的响应。
+  - *AxREGION* 信号仅提供现有地址空间的地址解码，从机可以使用它来消除对地址解码功能的需求。信号不会创建新的独立地址空间。 *AxREGION* 只存在于地址解码功能下游的接口上
+
+## 8.3. User-defined signaling
+
+- 在AMBA 4中引入了用户定义的信号。对于AMBA 5，这些信号的用法和配置在协议中得到了进一步的阐明和统一。AXI接口可以包括一组用户定义的信号，称为用户信号。这些信号可用于将信息扩展到现有AMBA规范未涵盖的要求的事务中。扩展信息可添加到：
+  - 事务请求
+  - 事务响应
+  - 内部的每个读写数据节拍 
+- 通常，本规范建议不要使用用户信号。AXI协议未定义这些信号的功能，如果两个组件以不兼容的方式使用相同的用户信号，则可能导致互操作性问题
+
+### 8.3.1. User-defined signaling configuration
+
+- **User signals properties**
+  - 如果属性值为零，则接口上不存在相关信号。
+  - 最大值仅具有指导意义，以便为可配置接口设置合理的最大值。 
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Min</th>
+        <th>Max</th>
+        <th>Applies to</th>
+    </tr>
+    <tr>
+        <td><em>USER_REQ_WIDTH</em></td>
+        <td>0</td>
+        <td>128</td>
+        <td><strong>AWUSER，ARUSER</strong></td>
+    </tr>
+    <tr>
+        <td><em>USER_DATA_WIDTH</em></td>
+        <td>0</td>
+        <td>DATA_WIDTH/2</td>
+        <td><strong>WUSER，RUSER</strong></td>
+    </tr>
+    <tr>
+        <td><em>USER_RESP_WIDTH</em></td>
+        <td>0</td>
+        <td>16</td>
+        <td><strong>BUSER，RUSER</strong></td>
+    </tr>
+</table>
+
+
+- **以下接口类型可以包括自定义信号：**
+  - ACE5
+  - ACE5-Lite
+  - ACE5-LiteDVM
+  - ACE5-LiteACP
+  - AXI5
+  - AXI5-Lite
+
+### 8.3.2. Signaling
+
+- **User-defined signals** 
+<table>
+    <tr>
+        <th>Signal</th>
+        <th>Width</th>
+        <th>Description</th>
+    </tr>
+    <tr>
+        <td><strong>ARUSER</strong></td>
+        <td><em>USER_REQ_WIDTH</em></td>
+        <td>
+            用户自定义读请求属性
+            其有效性同其他读地址通道信号
+        </td>
+    </tr>
+    <tr>
+        <td><strong>AWUSER</strong></td>
+        <td><em>USER_REQ_WIDTH</em></td>
+        <td>
+            用户自定义写请求属性
+            其有效性同其他写地址通道信号
+        </td>
+    </tr>
+    <tr>
+        <td><strong>WUSER</strong></td>
+        <td><em>USER_DATA_WIDTH</em></td>
+        <td>
+            用户自定义写数据属性
+            其有效性同其他写数据通道信号
+        </td>
+    </tr>
+    <tr>
+        <td><strong>RUSER</strong></td>
+        <td><em>USER_RESP_WIDTH＋USER_RESP_WIDTH</em></td>
+        <td>
+            用户自定义读数据和读响应属性
+            其有效性同其他读数据通道信号
+        </td>
+    </tr>
+    <tr>
+        <td><strong>BUSER</strong></td>
+        <td><em>USER_RESP_WIDTH</em></td>
+        <td>
+            用户自定义写响应属性
+            其有效性同其他写响应通道信号
+        </td>
+    </tr>
+</table> 
+
+### 8.3.3. Usage considerations
+
+- 在使用用户信号的情况下，并不需要所有通道都支持用户信号。是否包括用户信号的设计对请求，数据和响应通道是独立的。
+- 为了帮助数据宽度和协议转换，本规范建议：
+  - USER_DATA_WIDTH是数据总线宽度的整数倍（以字节为单位）。
+  - 用户响应位对于读取或写入响应的每个节拍都是相同的值。
+  - RUSER的低位用于传输每个事务的响应信息。 
+  - RUSER的高位用于传输逐拍读取的数据信息。
+
+# 9. Default Signaling and Interoperability
+
+- 本章介绍了默认信号指令和AXI接口的互操作性。
+- AXI协议不需要组件使用AXI接口上可用的全部信号集。为了帮助连接不使用每种信号的组件，本章定义了接口的主要类别以及适用于每种类别的限制。
+
+## 9.1. Interoperability principles
+  
+- 下面所述互操作性原则适用于所有的AXI3和AXI4组件。
+- 作为一般原则，组件必须支持所有输入组合，但不必生成所有输出组合。例如，从设备必须支持所有可能的不同长度的突发传输，而主设备仅生成其使用的突发类型。此策略可确保所有组件与其他组件一起使用。
+- AXI接口可以省略信号的情形：
+  - **输出可选**
+    - 如果一个组件要求某信号的值不是默认值，则该组件必须输出该信号。
+    - 如果一个组件对某信号的值不做要求，即为默认值，则该组件不需要输出该信号。
+  - **输入可选** 
+    - 当主机或从机不需要观察某输入信号就可进行正确的功能操作时，该输入信号即可省略。
+- **注意**：在适当的时机，互连组件也可以省略信号
+  - 当信号被驱动为其默认值时，就不需要跨互连传输该信号，可以在其目的地创建该信号。 
+  - 如果在任何目的地均未使用某信号，则无需跨互连传输该信号。
+
+## 9.2. Major interface categories
+
+### 9.2.1. Read/Write interface
+
+- 读写接口包含以下AXI通道：
+  - 读地址
+  - 读数据
+  - 写地址
+  - 写数据
+  - 写响应
+
+### 9.2.2. Read-only interface
+
+- 只读接口仅支持读事务并且包含以下AXI通道：
+  - 读地址
+  - 读数据 
+- **注意**
+  - 只读接口不支持独占访问。
+ 
+### 9.2.3. Write-only interface
+
+- 只写接口仅支持写事务并且包含以下AXI通道：
+  - 写地址
+  - 写数据
+  - 写响应
+- **注意**
+  - 只写接口不支持独占访问。
+
+### 9.2.4. Memory slaves and Peripheral slaves
+
+- AXI从机可分为存储从机和外设从机：
+  - 存储从机必须能够正确处理所有事物类型。
+  - 外设从机应具有自己定义的访问方法，该方法可用于确定访问设备的事务类型，以及是否对设备的访问方式有任何限制。
+    - 通常，在组件的数据表中描述了定义的访问方法。任何不是定义的访问方法的访问都可能导致外设发生故障，但该访问应以符合协议的故障安全方式完成，以防止系统死锁。在此情况下外设并不需要继续正确的操作。
+    - 由于外设仅针对其定义的访问方法才能正常工作，因此外设的接口信号集会大大减少。
+
+- **注意**
+  - 期望所有外设都支持事务的子集，该子集允许使用可以在C代码中指定的访问来控制外围设备。例如，可能支持单个8位，单个16位或单个32位对齐的事务。
+  - 未定义最小子集，因为所支持事务的子集在外设之间可能有所不同。例如，一个外设可能仅支持16位访问，而另一个外设可能仅支持32位访问。
+
+## 9.3. Default signal values
+
+- 通常，为了最大程度地实现IP重用，AXI组件接口应包括所有信号，这样降低了在设计流程的系统集成阶段出错的风险，并且还可以支持某些不能有效支持省略信号的默认值的设计流程。
+
+### 9.3.1. Default signal values
+
+- **主接口写通道信号及其默认值**
+<table>
+    <tr align="left">
+        <th>Signal</th>
+        <th>Direction</th>
+        <th>Required?</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td><strong>ACLK</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARESETn</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>AWID</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>All zeros</td>
+    </tr>
+    <tr>
+        <td><strong>AWADDR</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>AWREGION</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>All zeros</td>
+    </tr>
+    <tr>
+        <td><strong>AWLEN</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>All zeros, Length 1</td>
+    </tr>
+    <tr>
+        <td><strong>AWSIZE</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>Data bus width</td>
+    </tr>
+    <tr>
+        <td><strong>AWBURST</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>0b01, INCR</td>
+    </tr>
+    <tr>
+        <td><strong>AWLOCK</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>All zeros, Normal access</td>
+    </tr>
+    <tr>
+        <td><strong>AWCACHE</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>0b0000</td>
+    </tr>
+    <tr>
+        <td><strong>AWPROT</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>AWQOS</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>0b0000</td>
+    </tr>
+    <tr>
+        <td><strong>AWVALID</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>AWREADY</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>WDATA</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>WSTRB</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>All ones</td>
+    </tr>
+    <tr>
+        <td><strong>WLAST</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>WVALID</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>WREADY</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>BID</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>BRESP</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>BVALID</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>BREADY</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+</table> 
+
+- **存储从接口写通道信号及其默认值**
+<table>
+    <tr align="left">
+        <th>Signal</th>
+        <th>Direction</th>
+        <th>Required?</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td><strong>ACLK</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARESETn</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>AWID</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>AWADDR</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>AWREGION</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>AWLEN</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>AWSIZE</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>AWBURST</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>AWLOCK</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>AWCACHE</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>AWPROT</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>AWQOS</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>0b0000</td>
+    </tr>
+    <tr>
+        <td><strong>AWVALID</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>AWREADY</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>WDATA</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>WSTRB</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>WLAST</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>WVALID</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>WREADY</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>BID</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>BRESP</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>0b00,OKAY</td>
+    </tr>
+    <tr>
+        <td><strong>BVALID</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>BREADY</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+</table>
+
+- **主接口读通道信号及其默认值**
+<table>
+    <tr align="left">
+        <th>Signal</th>
+        <th>Direction</th>
+        <th>Required?</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td><strong>ARID</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>All zeros</td>
+    </tr>
+    <tr>
+        <td><strong>ARADDR</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARREGION</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>0x0</td>
+    </tr>
+    <tr>
+        <td><strong>ARLEN</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>All zeros, Length 1</td>
+    </tr>
+    <tr>
+        <td><strong>ARSIZE</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>Data bus width</td>
+    </tr>
+    <tr>
+        <td><strong>ARBURST</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>0b01, INCR</td>
+    </tr>
+    <tr>
+        <td><strong>ARLOCK</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>All zeros, Normal access</td>
+    </tr>
+    <tr>
+        <td><strong>ARCACHE</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>0b0000</td>
+    </tr>
+    <tr>
+        <td><strong>ARPROT</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARQOS</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>0b0000</td>
+    </tr>
+    <tr>
+        <td><strong>ARVALID</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARREADY</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>RID</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>RDATA</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>RRESP</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>RLAST</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>RVALID</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>RREADY</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+</table>
+
+- **存储从接口读通道信号及其默认值**
+<table>
+    <tr align="left">
+        <th>Signal</th>
+        <th>Direction</th>
+        <th>Required?</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td><strong>ARID</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARADDR</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARREGION</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARLEN</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARSIZE</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARBURST</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARLOCK</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARCACHE</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARPROT</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARQOS</strong></td>
+        <td>Input</td>
+        <td>Optional</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARVALID</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>ARREADY</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>RID</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>RDATA</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>RRESP</strong></td>
+        <td>Output</td>
+        <td>Optional</td>
+        <td>0b00,OKAY</td>
+    </tr>
+    <tr>
+        <td><strong>RLAST</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>RVALID</strong></td>
+        <td>Output</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td><strong>RREADY</strong></td>
+        <td>Input</td>
+        <td>Required</td>
+        <td>-</td>
+    </tr>
+</table> 
+
+### 9.3.2. Default signal requirements
+
+- **Master address**
+  - 对主机提供的地址位数没有最低要求。如果主机连接的系统的地址总线宽度与主机提供的地址总线宽度不同：
+    - 系统地址比主机提供的地址宽，则必须给主机的高位地址位附加全零值。
+    - 系统地址比主机提供的地址窄，则必须断开主机的高位地址位。
+  - 注意
+    - 通常，主机提供32位寻址。但有时候主机可以支持64位寻址。
+
+- **Memory slaves**
+  - 存储从机对 *AxLOCK* 输入信号的使用不做要求，但是对于支持独占访问的存储从机则需要此信号。
+  - 存储从机对 *AxCACHE* 输入信号的使用不做要求。在以下情形存储从机不需要此信号：
+    - 无缓存行为
+    - 以相同方式缓存所有事务
+
+- **Write transactions**
+  - 如果主机始终以完整的数据总线位宽执行写事务，则不需要主机使用写选通信号WSTRB。写选通的默认值是全为高。
+  - 从机对 *WLAST* 信号的使用不做要求。由于定义了写突发传输的长度，因此从机可以根据突发传输长度 *AWLEN[7：0]* 信号计算最后一次写数据的传输。
+
+- **Read transactions**
+  - 主机对 *RLAST* 信号的使用不做要求。由于定义了读突发传输的长度，因此主机可以根据突发传输长度 *AWLEN[7：0]* 信号计算最后一次读数据的传输。
+
+- **Response signaling**
+  - 如果主机同时满足以下条件，则不需要 *RRESP* 和 *BRESP* 输入信号：
+    - 不执行独占访问
+    - 不需要通知事务错误
+  - 如果从机同时满足以下条件，则不需要 *RRESP* 和 *BRESP* 输出信号：
+    - 不支持独占访问
+    - 不生成错误响应
+
+- **Non-secure and Secure accesses**
+  - 不需要区分非安全访问和安全访问的从机，并且不需要任何其他保护支持，则不需要 *AxPROT* 输入信号。
+  - **注意**
+    - 请特别注意 *AxPROT信号* 。*AxPROT[1]* 信号指示事务的安全性或非安全性，并且错误分配这些位可能导致错误的系统行为。
